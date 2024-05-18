@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import ListGroup from 'react-bootstrap/ListGroup';
 
-export function Buscador({ onSearch, feriados }) {
-  const [searchResults, setSearchResults] = useState([]);
+export function Buscador({ onSearch, feriados, setFilteredFeriados }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('ascendente');
 
-  const handleSort = (typeSort) => {
-    let feriadosOrdenados;
-    if (typeSort === 'ascendente') {
-      feriadosOrdenados = [...feriados].sort((feriado1, feriado2) =>
-        feriado1.title.localeCompare(feriado2.title)
+  useEffect(() => {
+    const filteredAndSortedFeriados = feriados
+      .filter((feriado) =>
+        feriado.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((feriado1, feriado2) =>
+        sortOrder === 'ascendente'
+          ? feriado1.title.localeCompare(feriado2.title)
+          : feriado2.title.localeCompare(feriado1.title)
       );
-    } else {
-      feriadosOrdenados = [...feriados].sort((feriado1, feriado2) =>
-        feriado2.title.localeCompare(feriado1.title)
-      );
-    }
-    setSearchResults(feriadosOrdenados);
-  };
+    setFilteredFeriados(filteredAndSortedFeriados);
+  }, [searchTerm, sortOrder, feriados, setFilteredFeriados]);
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
+    setSearchTerm(value);
     onSearch(value);
+  };
 
-    const dataFiltered = feriados.filter((feriado) =>
-      feriado.title.toLowerCase().includes(value.toLowerCase())
-    );
-    setSearchResults(dataFiltered);
+  const handleSortChange = (event) => {
+    setSortOrder(event.target.value);
   };
 
   return (
@@ -41,27 +41,19 @@ export function Buscador({ onSearch, feriados }) {
               type="search"
               placeholder="Ingresa el nombre del feriado que buscas"
               onChange={handleSearchChange}
+              value={searchTerm}
             />
           </InputGroup>
         </div>
         <div className="col-4">
           <Form.Select
             aria-label="Default select example"
-            onChange={(event) => handleSort(event.target.value)}
+            onChange={handleSortChange}
+            value={sortOrder}
           >
-            <option defaultChecked>Ordenar por título</option>
             <option value="ascendente">Ascendente</option>
             <option value="descendente">Descendente</option>
           </Form.Select>
-        </div>
-      </div>
-      <div className="row">
-        <div className="col-12">
-          <ListGroup>
-            {searchResults.map((feriado) => (
-              <ListGroup.Item key={feriado.title}>{feriado.title}</ListGroup.Item>
-            ))}
-          </ListGroup>
         </div>
       </div>
     </>
@@ -71,4 +63,5 @@ export function Buscador({ onSearch, feriados }) {
 Buscador.propTypes = {
   onSearch: PropTypes.func.isRequired,
   feriados: PropTypes.array.isRequired,
+  setFilteredFeriados: PropTypes.func.isRequired,
 };
